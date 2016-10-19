@@ -22,7 +22,7 @@ import {
 import {SearchWiki} from './wikisearch.service';
 
 const mockResponse = {
-  "batchcomplete": "",
+  "batchcomplete": "yes",
   "continue": {
     "sroffset": 10,
     "continue": "-||"
@@ -57,31 +57,56 @@ describe('Wikipedia search service', () => {
   //   });
   // });
   let backend: MockBackend;
+  let service: SearchWiki;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      imports: [HttpModule],
-      providers: [
-      {
-        provide: XHRBackend,
-        useClass: MockBackend,
-        useFactory: (backend: XHRBackend, defaultOptions: BaseRequestOptions) => {
-           return new Http(backend, defaultOptions);
-        },
-        SearchWiki
-      }
-      ]
-    });
+            providers: [
+                BaseRequestOptions,
+                MockBackend,
+                SearchWiki,
+                {
+                    deps: [
+                        MockBackend,
+                        BaseRequestOptions
+                    ],
+                    provide: Http,
+                    useFactory: (backend: XHRBackend, defaultOptions: BaseRequestOptions) => {
+                        return new Http(backend, defaultOptions);
+                    }
+                }
+            ]
+        });
 
-
-
-    const testbed = getTestBed();
-    backend = testbed.get(MockBackend);
+        const testbed = getTestBed();
+        backend = testbed.get(MockBackend);
+        service = testbed.get(SearchWiki);
 
   }));
 
+  function setupConnections(backend: MockBackend, options: any) {
+        backend.connections.subscribe((connection: MockConnection) => {
+            if (connection.request.url) {
+                const responseOptions = new ResponseOptions(options);
+                const response = new Response(responseOptions);
 
-  it('should get search results', fakeAsync(
+                connection.mockRespond(response);
+            }
+        });
+    }
+
+  it('should return the list of forms from the server on success', () => {
+        setupConnections(backend, {
+            body: mockResponse,
+            status: 200
+        });
+
+        service.search('Angular').subscribe((data) => {
+            expect(data.batchcomplete).toBe('yes');
+        });
+    });
+
+  /*it('should get search results', fakeAsync(
     inject([
       XHRBackend,
       SearchWiki
@@ -105,7 +130,7 @@ describe('Wikipedia search service', () => {
           expect(res).toEqual(mockResponse);
         });
       })
-    ));
+    ));*/
 
   // it('should set foo with a 1s delay', fakeAsync(
   //   inject([SearchWiki], (searchWiki: SearchWiki) => {
