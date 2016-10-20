@@ -7,10 +7,9 @@ import 'rxjs/add/operator/map'
 export class SearchWiki {
   constructor (private http: Http) {}
 
-  search(term: string): Observable<any> {
+  search(): Observable<any> {
     return this.http.get(
-      'https://en.wikipedia.org/w/api.php?' +
-      'action=query&list=search&srsearch=' + term
+      'http://172.16.103.53:8080/messenger/webapi/profiles/parthi'
     ).map((response) => response.json());
   }
 

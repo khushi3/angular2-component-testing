@@ -1,6 +1,4 @@
 import {
-  fakeAsync,
-  inject,
   async,
   getTestBed,
   TestBed
@@ -9,7 +7,6 @@ import {
   BaseRequestOptions,
   Http,
   ResponseOptions,
-  HttpModule,
   XHRBackend,
   Response,
   RequestMethod,
@@ -21,90 +18,98 @@ import {
 
 import {SearchWiki} from './wikisearch.service';
 
-const mockResponse = {
-  "batchcomplete": "yes",
-  "continue": {
-    "sroffset": 10,
-    "continue": "-||"
-  },
-  "query": {
-    "searchinfo": {
-      "totalhits": 36853
-    },
-    "search": [{
-      "ns": 0,
-      "title": "Stuff",
-      "snippet": "<span></span>",
-      "size": 1906,
-      "wordcount": 204,
-      "timestamp": "2016-06-10T17:25:36Z"
-    }]
-  }
+// const mockResponse = {
+//   "batchcomplete": "yes",
+//   "continue": {
+//     "sroffset": 10,
+//     "continue": "-||"
+//   },
+//   "query": {
+//     "searchinfo": {
+//       "totalhits": 36853
+//     },
+//     "search": [{
+//       "ns": 0,
+//       "title": "Stuff",
+//       "snippet": "<span></span>",
+//       "size": 1906,
+//       "wordcount": 204,
+//       "timestamp": "2016-06-10T17:25:36Z"
+//     }]
+//   }
+// };
+
+const mockResponse ={
+
+  "created": "2016-10-20T12:54:30.312+05:30",
+  "firstName": "AAA",
+  "id": 1,
+  "lastName": "AAA",
+  "profileName": "AAA"
 };
 
 describe('Wikipedia search service', () => {
 
-  // beforeEach(() => {
-  //   TestBed.configureTestingModule({
-  //     imports: [HttpModule],
-  //     providers: [
-  //       {
-  //         provide: XHRBackend,
-  //         useClass: MockBackend
-  //       },
-  //       SearchWiki
-  //     ]
-  //   });
-  // });
   let backend: MockBackend;
   let service: SearchWiki;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-            providers: [
-                BaseRequestOptions,
-                MockBackend,
-                SearchWiki,
-                {
-                    deps: [
-                        MockBackend,
-                        BaseRequestOptions
-                    ],
-                    provide: Http,
-                    useFactory: (backend: XHRBackend, defaultOptions: BaseRequestOptions) => {
-                        return new Http(backend, defaultOptions);
-                    }
-                }
-            ]
-        });
+      providers: [
+      BaseRequestOptions,
+      MockBackend,
+      SearchWiki,
+      {
+        deps: [
+        MockBackend,
+        BaseRequestOptions
+        ],
+        provide: Http,
+        useFactory: (backend: XHRBackend, defaultOptions: BaseRequestOptions) => {
+          return new Http(backend, defaultOptions);
+        }
+      }
+      ]
+    });
 
-        const testbed = getTestBed();
-        backend = testbed.get(MockBackend);
-        service = testbed.get(SearchWiki);
+    const testbed = getTestBed();
+    backend = testbed.get(MockBackend);
+    service = testbed.get(SearchWiki); 
 
   }));
 
   function setupConnections(backend: MockBackend, options: any) {
-        backend.connections.subscribe((connection: MockConnection) => {
-            if (connection.request.url) {
-                const responseOptions = new ResponseOptions(options);
-                const response = new Response(responseOptions);
+    backend.connections.subscribe((connection: MockConnection) => {
+      if (connection.request.url) {
+        const responseOptions = new ResponseOptions(options);
+        const response = new Response(responseOptions);
 
-                connection.mockRespond(response);
-            }
-        });
-    }
-
-  it('should return the list of forms from the server on success', () => {
-        setupConnections(backend, {
-            body: mockResponse,
-            status: 200
-        });
-
-        service.search('Angular').subscribe((data) => {
-            expect(data.batchcomplete).toBe('yes');
-        });
+        connection.mockRespond(response);
+      }
     });
+  }
+
+  it('should get search results', () => {
+    const expectedUrl = 'http://172.16.103.53:8080/messenger/webapi/profiles/parthi';
+
+
+    setupConnections(backend, {
+      body: mockResponse,
+      status: 200
+    });
+
+    service.search().subscribe(res => {
+      backend.connections.subscribe((connection: MockConnection) => {
+        if (connection.request.url) {
+          expect(connection.request.method).toBe(RequestMethod.Get);
+          expect(connection.request.url).toBe(expectedUrl); 
+        }
+      });
+
+       expect(res).toEqual(mockResponse);
+    });
+  });
+});
 
   /*it('should get search results', fakeAsync(
     inject([
@@ -130,7 +135,7 @@ describe('Wikipedia search service', () => {
           expect(res).toEqual(mockResponse);
         });
       })
-    ));*/
+      ));*/
 
   // it('should set foo with a 1s delay', fakeAsync(
   //   inject([SearchWiki], (searchWiki: SearchWiki) => {
@@ -140,4 +145,3 @@ describe('Wikipedia search service', () => {
   //   })
   // ));
 
-});
