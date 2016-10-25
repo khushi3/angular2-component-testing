@@ -16,7 +16,7 @@ import {
   MockConnection
 } from '@angular/http/testing';
 
-import {SearchWiki} from './wikisearch.service';
+import {SearchWiki} from './services/wikisearch.service';
 
 // const mockResponse = {
 //   "batchcomplete": "yes",
@@ -47,6 +47,16 @@ const mockResponse ={
   "lastName": "AAA",
   "profileName": "AAA"
 };
+
+const mockResponsePost ={
+
+  "created": "2016-10-20T12:54:30.312+05:30",
+  "firstName": "AAA",
+  "id": 1,
+  "lastName": "AAA",
+  "profileName": "AAA"
+};
+
 
 describe('Wikipedia search service', () => {
 
@@ -102,6 +112,27 @@ describe('Wikipedia search service', () => {
       backend.connections.subscribe((connection: MockConnection) => {
         if (connection.request.url) {
           expect(connection.request.method).toBe(RequestMethod.Get);
+          expect(connection.request.url).toBe(expectedUrl); 
+        }
+      });
+
+       expect(res).toEqual(mockResponse);
+    });
+  });
+
+  it('should post search results', () => {
+    const expectedUrl = 'http://172.16.103.53:8080/messenger/webapi/profiles/';
+
+
+    setupConnections(backend, {
+      body: mockResponsePost,
+      status: 200
+    });
+
+     service.search2().subscribe(res => {
+      backend.connections.subscribe((connection: MockConnection) => {
+        if (connection.request.url) {
+          expect(connection.request.method).toBe(RequestMethod.Post);
           expect(connection.request.url).toBe(expectedUrl); 
         }
       });
